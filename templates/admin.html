@@ -159,21 +159,52 @@ function verTabla(nombre){
     table.appendChild(thead);
 
     const tbody=document.createElement('tbody');
-    data.registros.forEach(r=>{
-      const tr=document.createElement('tr');
+        data.registros.forEach(r=>{
+      const tr = document.createElement('tr');
+    
+      // Crear celdas con los valores del registro
       Object.values(r).forEach(val=>{
-        const td=document.createElement('td'); td.textContent=val; tr.appendChild(td);
+        const td = document.createElement('td');
+        td.textContent = val;
+        tr.appendChild(td);
       });
-      const tdAcc=document.createElement('td');
-      const btn=document.createElement('button');
-      btn.textContent='Borrar';
-      btn.className='delete-btn';
-      btn.onclick=()=>{
+    
+      // Celda de acciones
+      const tdAcc = document.createElement('td');
+    
+      // Botón Editar
+      const btnEdit = document.createElement('button');
+      btnEdit.textContent = 'Editar';
+      btnEdit.className = 'submit-btn';
+      btnEdit.style.marginRight = '5px';
+      btnEdit.onclick = () => {
+        const nuevosDatos = {};
+        Object.keys(r).forEach(col => {
+          if(col !== 'id'){
+            const val = prompt(`Nuevo valor para ${col}:`, r[col]);
+            if(val !== null) nuevosDatos[col] = val;
+          }
+        });
+        fetch(`/db/table/${nombre}/row/${r.id}`, {
+          method: 'PUT',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(nuevosDatos)
+        }).then(()=> verTabla(nombre));
+      };
+      tdAcc.appendChild(btnEdit);
+    
+      // Botón Borrar
+      const btnDelete = document.createElement('button');
+      btnDelete.textContent = 'Borrar';
+      btnDelete.className = 'delete-btn';
+      btnDelete.onclick = () => {
         if(confirm('Borrar este registro?')){
-          fetch(`/db/table/${nombre}/row/${r.id}`,{method:'DELETE'}).then(()=>verTabla(nombre));
+          fetch(`/db/table/${nombre}/row/${r.id}`, {method:'DELETE'})
+            .then(()=> verTabla(nombre));
         }
       };
-      tdAcc.appendChild(btn);
+      tdAcc.appendChild(btnDelete);
+    
       tr.appendChild(tdAcc);
       tbody.appendChild(tr);
     });
