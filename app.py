@@ -93,6 +93,32 @@ def crear_app():
             return jsonify({"msg": f"Fila {row_id} borrada de {nombre}"})
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+
+# Editar fila por ID
+    @app.route("/db/table/<nombre>/row/<int:row_id>", methods=["PUT"])
+    def editar_fila(nombre, row_id):
+        try:
+            datos = request.json  # JSON con los campos a actualizar
+            conn = get_conn()
+            cur = conn.cursor()
+            
+            # Construir SET dinámicamente
+            columnas = datos.keys()
+            valores = list(datos.values())
+            set_clause = ", ".join([f"{col} = %s" for col in columnas])
+            
+            query = sql.SQL("UPDATE {} SET {} WHERE id = %s").format(
+                sql.Identifier(nombre),
+                sql.SQL(set_clause)
+            )
+            cur.execute(query, valores + [row_id])
+            conn.commit()
+            cur.close()
+            conn.close()
+            return jsonify({"msg": f"Fila {row_id} actualizada en {nombre}"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     
     @app.route("/db/tables/<nombre>", methods=["DELETE"])
     def borrar_tabla(nombre):
