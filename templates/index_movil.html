@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>BANEX</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <style>
+    /* [Aquí van todos los estilos CSS exactamente como en tu primer HTML, ya están incluidos en el documento] */
+  </style>
+</head>
+<body>
+<header>
+  <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo" alt="BANEX" onclick="toggleMenu()" />
+  <div id="menu" style="display: none;"> <!-- oculto al inicio -->
+    <nav>
+      <ul class="menu">
+        <li><a href="#" onclick="mostrarSeccion('inicio'); toggleMenu(true)">Inicio</a></li>
+        <li><a href="#" onclick="abrirNosotros(); toggleMenu(true)">Nosotros</a></li>
+        <li><a href="#" onclick="mostrarSeccion('ideas'); toggleMenu(true)">Ideas</a></li>
+        <li><a href="#" onclick="mostrarSeccion('novedades'); cargarNovedades(); toggleMenu(true)">Novedades</a></li>
+      </ul>
+    </nav>
+    <button id="btn-login" onclick="abrirLogin()">Iniciar sesión</button>
+  </div>
+</header>
+
+<section id="novedades" class="contenido">
+  <h2>Novedades</h2>
+  <div id="slider-novedades" style="position:relative;text-align:center;">
+    
+    <div id="contenedor-novedades" style="overflow:hidden;position:relative;">
+      <!-- Las novedades van aquí por JS -->
+    </div>
+
+    <!-- Flechas debajo -->
+    <div style="margin-top:10px;display:flex;justify-content:center;gap:10px;">
+      <button onclick="anteriorNovedad()" 
+              style="background:#fff;border:none;padding:10px 14px;border-radius:50%;cursor:pointer;transition:background 0.3s;">
+        ⬅
+      </button>
+      <button onclick="siguienteNovedad()" 
+              style="background:#fff;border:none;padding:10px 14px;border-radius:50%;cursor:pointer;transition:background 0.3s;">
+        ➡
+      </button>
+    </div>
+  </div>
+</section>
+
+<section id="inicio" class="contenido activo">
+  <h1>Bienvenido a BANEX</h1>
+  <p>
+    Este proyecto viene del proyecto mipambu, Nos inspiramos en este proyecto anterior que comprobó que el bambú limpia el agua sucia, bajando su pH.
+  </p>
+  <p>
+    La idea principal de mipambu era hacer que plantar bambú pueda generar puestos de trabajo, limpiar el agua de arroyos contaminados en Uruguay, además de dar bastante trabajo por los diferentes usos que se le puede dar al bambú.
+  </p>
+  <p>
+    Nosotros mezclaremos la idea anterior de mipambu con la tecnología, ya que esta idea surgió gracias a la Olimpíada número 12 de Ceibal. ¡Un bambú a la vez, rescatamos un pez! (no sabia con que rimarlo)
+  </p>
+  <p>
+  para poder ver mas funciones toca el logo de BANEX arriba en el medio
+  </p>
+</section>
+
+<section id="ideas" class="contenido">
+  <h2>Envíanos tus Ideas</h2>
+  <form id="form-ideas" method="POST">
+    <input type="text" name="nombre" placeholder="Tu nombre" required />
+    <textarea name="idea" placeholder="Escribe tu idea..." required></textarea>
+    <button type="submit">Enviar</button>
+  </form>
+</section>
+
+<!-- Modales -->
+<div id="modal-gracias" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarGracias()">&times;</span>
+    <h2>¡Gracias por tu idea!</h2>
+    <p>Tu propuesta se ha enviado con éxito.</p>
+  </div>
+</div>
+
+<div id="modal-nosotros" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarNosotros()">&times;</span>
+    <h2>BANEX</h2>
+    <img src="{{ url_for('static', filename='img/equipo.jpg') }}" alt="Equipo" style="max-width:100%;" />
+    <p>
+      Somos de CEC La Teja, un anexo en Heredia 4430, 11900 Montevideo. Participamos en la edición número 12 de las Olimpiadas Tecnológicas de Ceibal. En esta página queremos pedirles ideas para nuestro proyecto y darles información y progresos.
+    </p>
+  </div>
+</div>
+
+<div id="modal-login" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarLogin()">&times;</span>
+    <h2>Iniciar sesión</h2>
+    <form id="form-login">
+      <input type="text" id="usuario" placeholder="Usuario" required />
+      <input type="password" id="contrasena" placeholder="Contraseña" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="error-login" style="color:red;display:none;">Usuario o contraseña incorrectos.</p>
+  </div>
+</div>
+
+<div id="modal-actualizar" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarActualizar()">&times;</span>
+    <h2>Actualizar contenido</h2>
+    <form id="form-actualizar">
+      <label>Inserta foto (opcional):</label>
+      <input type="file" id="foto" accept="image/*" />
+      <label>Asunto:</label>
+      <input type="text" id="asunto" required />
+      <label>Mensaje:</label>
+      <textarea id="mensaje" required></textarea>
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleMenu(forzarCerrar = false) {
+  const menu = document.getElementById('menu');
+  if (forzarCerrar) {
+    menu.style.display = 'none';
+  } else {
+    const visible = menu.style.display === 'block';
+    menu.style.display = visible ? 'none' : 'block';
+  }
+}
+
+
+function mostrarSeccion(id) {
+  // Scroll al top ANTES de hacer cambios
+  window.scrollTo({ top: 0, behavior: 'auto' });
+
+  // Pequeña pausa para asegurar el scroll se aplicó antes de mostrar contenido
+  setTimeout(() => {
+    document.querySelectorAll('.contenido').forEach(sec => {
+      sec.classList.toggle('activo', sec.id === id);
+    });
+
+    if (id === 'novedades') {
+      cargarNovedades(); // solo cargar cuando entras a novedades
+    }
+  }, 50); // delay suficiente para evitar salto visual
+}
+
+function abrirNosotros(){document.getElementById('modal-nosotros').style.display='flex';}
+function cerrarNosotros(){document.getElementById('modal-nosotros').style.display='none';}
+function abrirLogin(){document.getElementById('modal-login').style.display='flex';}
+function cerrarLogin(){document.getElementById('modal-login').style.display='none';}
+function abrirActualizar(){document.getElementById('modal-actualizar').style.display='flex';}
+function cerrarActualizar(){document.getElementById('modal-actualizar').style.display='none';}
+function cerrarGracias(){document.getElementById('modal-gracias').style.display='none';}
+
+let novedades = [];
+let indiceActual = 0;
+
+function cargarNovedades() {
+  fetch('/ver-novedades')
+    .then(res => res.json())
+    .then(data => {
+      novedades = data.novedades;
+      indiceActual = 0;
+      mostrarNovedadActual();
+    });
+}
+
+function mostrarNovedadActual() {
+  const cont = document.getElementById('contenedor-novedades');
+  cont.innerHTML = '';
+
+  if (novedades.length === 0) return;
+
+  const item = novedades[indiceActual];
+  const box = document.createElement('div');
+  box.style.cssText = 'background:rgba(255,255,255,0.1);padding:15px;border-radius:8px;color:white;transition:opacity 0.3s ease;';
+  
+  if (item.imagen) {
+    const img = document.createElement('img');
+    img.src = item.imagen;
+    img.style.cssText = 'max-width:100%;border-radius:8px;margin-bottom:10px;';
+    box.appendChild(img);
+  }
+
+  const h3 = document.createElement('h3');
+  h3.textContent = item.asunto;
+
+  const p = document.createElement('p');
+  p.textContent = item.mensaje;
+
+  box.appendChild(h3);
+  box.appendChild(p);
+
+  cont.appendChild(box);
+}
+
+function siguienteNovedad() {
+  if (novedades.length === 0) return;
+  indiceActual = (indiceActual + 1) % novedades.length;
+  mostrarNovedadActual();
+}
+
+function anteriorNovedad() {
+  if (novedades.length === 0) return;
+  indiceActual = (indiceActual - 1 + novedades.length) % novedades.length;
+  mostrarNovedadActual();
+}
+
+let novedadesBorrar = [];
+let novedadBorrarActual = 0;
+
+function abrirBorrarNovedades() {
+  fetch('/ver-novedades')
+    .then(res => res.json())
+    .then(data => {
+      novedadesBorrar = data.novedades || [];
+      if (novedadesBorrar.length === 0) {
+        document.getElementById('novedad-borrar').innerHTML = "<p>No hay novedades para borrar.</p>";
+        document.getElementById('btn-prev-borrar').style.display = 'none';
+        document.getElementById('btn-next-borrar').style.display = 'none';
+        document.getElementById('btn-borrar-actual').style.display = 'none';
+      } else {
+        novedadBorrarActual = 0;
+        mostrarNovedadBorrar(novedadBorrarActual);
+        document.getElementById('btn-prev-borrar').style.display = 'inline-block';
+        document.getElementById('btn-next-borrar').style.display = 'inline-block';
+        const btnBorrar = document.getElementById('btn-borrar-actual');
+        btnBorrar.style.display = 'inline-block';
+
+        // Remover listener antiguo y agregar uno nuevo
+        btnBorrar.replaceWith(btnBorrar.cloneNode(true));
+        const nuevoBtn = document.getElementById('btn-borrar-actual');
+        nuevoBtn.addEventListener('click', () => {
+          if (novedadesBorrar.length === 0) return;
+          const item = novedadesBorrar[novedadBorrarActual];
+          // Borrar directamente
+          fetch(`/borrar-novedad/${item.id}`, { method: "POST" })
+            .then(res => {
+              if (res.ok) {
+                abrirBorrarNovedades();  // recargar lista
+                cargarNovedades();       // actualizar slider
+              }
+            });
+        });
+      }
+      document.getElementById('modal-borrar').style.display = 'flex';
+    });
+}
+
+
+function mostrarNovedadBorrar(index) {
+  const contenedor = document.getElementById('novedad-borrar');
+  contenedor.innerHTML = '';
+  if (novedadesBorrar.length === 0) return;
+  const item = novedadesBorrar[index];
+  const box = document.createElement('div');
+  box.style.cssText = 'background:rgba(255,255,255,0.1);padding:15px;border-radius:8px;color:white;transition:opacity 0.3s ease;';
+  if (item.imagen) {
+    const img = document.createElement('img');
+    img.src = item.imagen;
+    img.style.cssText = 'max-width:100%;border-radius:8px;margin-bottom:10px;';
+    box.appendChild(img);
+  }
+  const h3 = document.createElement('h3'); h3.textContent = item.asunto; box.appendChild(h3);
+  const p = document.createElement('p'); p.textContent = item.mensaje; box.appendChild(p);
+  const idInfo = document.createElement('p'); idInfo.textContent = `ID: ${item.id}`; box.appendChild(idInfo);
+  contenedor.appendChild(box);
+}
+
+function cambiarNovedadBorrar(direccion) {
+  if (novedadesBorrar.length === 0) return;
+  novedadBorrarActual += direccion;
+  if (novedadBorrarActual < 0) novedadBorrarActual = novedadesBorrar.length - 1;
+  else if (novedadBorrarActual >= novedadesBorrar.length) novedadBorrarActual = 0;
+  mostrarNovedadBorrar(novedadBorrarActual);
+}
+
+document.getElementById('btn-borrar-actual')?.addEventListener('click', () => {
+  if (novedadesBorrar.length === 0) return;
+  const item = novedadesBorrar[novedadBorrarActual];
+  
+  // Borrar directamente sin confirmación ni alerta
+  fetch(`/borrar-novedad/${item.id}`, { method: "POST" })
+    .then(res => {
+      if (res.ok) {
+        abrirBorrarNovedades();  // recargar lista de novedades
+        cargarNovedades();       // actualizar slider
+      }
+    });
+});
+
+function cerrarBorrar() { document.getElementById('modal-borrar').style.display = 'none'; }
+
+  
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('form-login').addEventListener('submit', e => {
+  e.preventDefault();
+  const user = document.getElementById('usuario').value;
+  const pass = document.getElementById('contrasena').value;
+
+  fetch('/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ usuario: user, contrasena: pass })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.ok) {
+      cerrarLogin();
+      document.getElementById('btn-login').style.display = 'none';
+      mostrarBotonAdmin();
+    } else {
+      document.getElementById('error-login').style.display = 'block';
+    }
+  })
+  .catch(err => console.error('Error en login:', err));
+});
+
+
+  function mostrarBotonAdmin() {
+  // Eliminar botones antiguos por si existen
+  ['btn-actualizar', 'btn-descargar-ideas', 'btn-borrar-novedades'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.remove();
+  });
+
+  // Crear botón Admin Panel
+  if (!document.getElementById('btn-admin')) {
+    const btn = document.createElement('button');
+    btn.id = 'btn-admin';
+    btn.textContent = 'Admin Panel';
+    btn.style.cssText = 'margin-left:20px;background:#343a40;color:#fff;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;';
+    btn.onclick = () => { window.location.href = '/admin'; };
+    document.querySelector('header').appendChild(btn);
+  }
+}
+
+
+
+  document.getElementById('form-actualizar').addEventListener('submit', e => {
+    e.preventDefault();
+    const foto = document.getElementById('foto');
+    const asunto = document.getElementById('asunto').value.trim();
+    const mensaje = document.getElementById('mensaje').value.trim();
+    if (!asunto || !mensaje) {
+      alert('Completa asunto y mensaje');
+      return;
+    }
+    const formData = new FormData();
+    formData.append('asunto', asunto);
+    formData.append('mensaje', mensaje);
+    if (foto.files.length > 0) {
+      formData.append('foto', foto.files[0]);
+    }
+    fetch('/novedades', { method: 'POST', body: formData })
+      .then(() => console.log('✅ Novedad guardada'))
+      .catch(err => console.error('❌ Error:', err));
+    cerrarActualizar();
+    e.target.reset();
+    mostrarSeccion('novedades');
+  });
+
+  document.getElementById('form-ideas').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/ideas', { method: 'POST', body: formData })
+      .then(() => {
+        document.getElementById('modal-gracias').style.display = 'flex';
+        this.reset();
+      })
+      .catch(err => console.error(err));
+  });
+
+  mostrarSeccion('inicio');
+});
+</script>
+
+
+<div id="modal-borrar" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarBorrar()">&times;</span>
+    <h2>Borrar novedad</h2>
+    <div id="novedad-borrar" style="transition: all 0.5s ease-in-out;"></div>
+    <div style="margin-top:10px;display:flex;justify-content:center;gap:10px;">
+      <button id="btn-prev-borrar" onclick="cambiarNovedadBorrar(-1)" 
+              style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:50%;cursor:pointer;">⬅</button>
+      <button id="btn-next-borrar" onclick="cambiarNovedadBorrar(1)" 
+              style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:50%;cursor:pointer;">➡</button>
+    </div>
+    <button id="btn-borrar-actual" 
+            style="margin-top:10px;background:#dc3545;color:white;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;">Borrar esta novedad</button>
+  </div>
+</div>
+  
+</body>
+</html>
+
+

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<script>
+  if (/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+    window.location.href = "/movil";
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>BANEX</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+<style>
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 100;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow:auto;
+    background-color: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+  }
+  .modal-content {
+    background: #222;
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    max-width: 500px;
+    margin:auto;
+  }
+  .cerrar {
+    float:right;
+    cursor:pointer;
+  }
+  .contenido { display:none; padding: 20px; }
+  .contenido.activo { display:block; }
+</style>
+</head>
+<body>
+<header>
+  <img src="{{ url_for('static', filename='img/logo.png') }}" class="logo" alt="BANEX" />
+  <nav>
+    <ul>
+      <li><a href="#" onclick="mostrarSeccion('inicio')">Inicio</a></li>
+      <li><a href="#" onclick="abrirNosotros()">Nosotros</a></li>
+      <li><a href="#" onclick="mostrarSeccion('ideas')">Ideas</a></li>
+      <li><a href="#" onclick="mostrarSeccion('novedades'); cargarNovedades();">Novedades</a></li>
+    </ul>
+  </nav>
+  <button id="btn-login" onclick="abrirLogin()" style="margin-left:auto;background:#28a745;color:white;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;">Iniciar sesión</button>
+</header>
+
+<!-- Secciones -->
+<section id="inicio" class="contenido activo">
+  <h1>Bienvenido a BANEX</h1>
+  <p>
+    Este proyecto viene del proyecto mipambu, Nos inspiramos en este proyecto anterior que comprobó que el bambú limpia el agua sucia, bajando su pH.
+  </p>
+  <p>
+    La idea principal de mipambu era hacer que plantar bambú pueda generar puestos de trabajo, limpiar el agua de arroyos contaminados en Uruguay, además de dar bastante trabajo por los diferentes usos que se le puede dar al bambú.
+  </p>
+  <p>
+    Nosotros mezclaremos la idea anterior de mipambu con la tecnología, ya que esta idea surgió gracias a la Olimpíada número 12 de Ceibal. ¡Un bambú a la vez, rescatamos un pez!
+  </p>
+</section>
+
+<section id="ideas" class="contenido">
+  <h2>Envíanos tus Ideas</h2>
+  <form id="form-ideas" method="POST">
+    <input type="text" name="nombre" placeholder="Tu nombre" required />
+    <textarea name="idea" placeholder="Escribe tu idea..." required></textarea>
+    <button type="submit">Enviar</button>
+  </form>
+</section>
+
+<section id="novedades" class="contenido">
+  <h2>Novedades (toca las flechas para cambiar las novedades)</h2>
+  <div id="slider-novedades" style="position:relative;overflow:hidden;padding:10px;">
+    <button onclick="cambiarNovedad(-1)" id="btn-prev" style="position:absolute;left:0;z-index:1;background:#28a745;border:none;color:white;padding:8px 12px;border-radius:50%;cursor:pointer;">&lt;</button>
+    <div id="novedad-activa" style="transition: all 0.5s ease-in-out; margin: 0 40px;"></div>
+    <button onclick="cambiarNovedad(1)" id="btn-next" style="position:absolute;right:0;z-index:1;background:#28a745;border:none;color:white;padding:8px 12px;border-radius:50%;cursor:pointer;">&gt;</button>
+  </div>
+</section>
+
+<!-- Modales -->
+<!-- Gracias -->
+<div id="modal-gracias" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarGracias()">&times;</span>
+    <h2>¡Gracias por tu idea!</h2>
+    <p>Tu propuesta se ha enviado con éxito.</p>
+  </div>
+</div>
+
+<!-- Nosotros -->
+<div id="modal-nosotros" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarNosotros()">&times;</span>
+    <h2>BANEX</h2>
+    <img src="{{ url_for('static', filename='img/equipo.jpg') }}" alt="Equipo" style="max-width:100%;" />
+    <p>
+      Somos de CEC La Teja, un anexo en Heredia 4430, 11900 Montevideo. Participamos en la edición número 12 de las Olimpiadas Tecnológicas de Ceibal.
+    </p>
+  </div>
+</div>
+
+<!-- Login -->
+<div id="modal-login" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarLogin()">&times;</span>
+    <h2>Iniciar sesión</h2>
+    <form id="form-login">
+      <input type="text" id="usuario" placeholder="Usuario" required />
+      <input type="password" id="contrasena" placeholder="Contraseña" required />
+      <button type="submit">Entrar</button>
+    </form>
+    <p id="error-login" style="color:red;display:none;">Usuario o contraseña incorrectos.</p>
+  </div>
+</div>
+
+<!-- Actualizar -->
+<div id="modal-actualizar" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarActualizar()">&times;</span>
+    <h2>Actualizar contenido</h2>
+    <form id="form-actualizar">
+      <label>Inserta foto (opcional):</label>
+      <input type="file" id="foto" accept="image/*" />
+      <label>Asunto:</label>
+      <input type="text" id="asunto" required />
+      <label>Mensaje:</label>
+      <textarea id="mensaje" required></textarea>
+      <button type="submit">Enviar</button>
+    </form>
+  </div>
+</div>
+
+<!-- Borrar Novedades (slider) -->
+<div id="modal-borrar" class="modal">
+  <div class="modal-content">
+    <span class="cerrar" onclick="cerrarBorrar()">&times;</span>
+    <h2>Borrar novedad</h2>
+    <div id="novedad-borrar" style="transition: all 0.5s ease-in-out;"></div>
+    <button id="btn-prev-borrar" onclick="cambiarNovedadBorrar(-1)" style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:50%;cursor:pointer;">&lt;</button>
+    <button id="btn-next-borrar" onclick="cambiarNovedadBorrar(1)" style="background:#28a745;color:white;border:none;padding:5px 10px;border-radius:50%;cursor:pointer;">&gt;</button>
+    <button id="btn-borrar-actual" style="margin-top:10px;background:#dc3545;color:white;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;">Borrar esta novedad</button>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script>
+let novedadesLista = [];
+let novedadActual = 0;
+
+let novedadesBorrar = [];
+let novedadBorrarActual = 0;
+
+function cargarNovedades() {
+  fetch('/ver-novedades')
+    .then(res => res.json())
+    .then(data => {
+      novedadesLista = data.novedades || [];
+      novedadActual = 0;
+      mostrarNovedad(novedadActual);
+    });
+}
+
+function mostrarNovedad(index) {
+  const contenedor = document.getElementById('novedad-activa');
+  contenedor.innerHTML = '';
+  if (novedadesLista.length === 0) return;
+  const item = novedadesLista[index];
+  const box = document.createElement('div');
+  box.style.cssText = 'background:rgba(255,255,255,0.1);padding:15px;border-radius:8px;color:white;animation:fadeIn 0.4s ease;';
+  if(item.imagen){ const img=document.createElement('img'); img.src=item.imagen; img.style.cssText='max-width:100%;border-radius:8px;margin-bottom:10px;'; box.appendChild(img);}
+  const h3=document.createElement('h3'); h3.textContent=item.asunto; box.appendChild(h3);
+  const p=document.createElement('p'); p.textContent=item.mensaje; box.appendChild(p);
+  contenedor.appendChild(box);
+  setTimeout(ajustarFlechas,100);
+}
+
+function cambiarNovedad(direccion) {
+  if(novedadesLista.length===0) return;
+  novedadActual += direccion;
+  if(novedadActual<0) novedadActual = novedadesLista.length-1;
+  else if(novedadActual>=novedadesLista.length) novedadActual=0;
+  mostrarNovedad(novedadActual);
+}
+
+// Slider Borrar Novedades
+function abrirBorrarNovedades(){
+  fetch('/ver-novedades')
+    .then(res=>res.json())
+    .then(data=>{
+      novedadesBorrar=data.novedades||[];
+      if(novedadesBorrar.length===0){
+        document.getElementById('novedad-borrar').innerHTML="<p>No hay novedades para borrar.</p>";
+        document.getElementById('btn-prev-borrar').style.display='none';
+        document.getElementById('btn-next-borrar').style.display='none';
+        document.getElementById('btn-borrar-actual').style.display='none';
+      }else{
+        novedadBorrarActual=0;
+        mostrarNovedadBorrar(novedadBorrarActual);
+        document.getElementById('btn-prev-borrar').style.display='inline-block';
+        document.getElementById('btn-next-borrar').style.display='inline-block';
+        document.getElementById('btn-borrar-actual').style.display='inline-block';
+      }
+      document.getElementById('modal-borrar').style.display='flex';
+    });
+}
+
+function mostrarNovedadBorrar(index){
+  const contenedor=document.getElementById('novedad-borrar');
+  contenedor.innerHTML='';
+  if(novedadesBorrar.length===0) return;
+  const item=novedadesBorrar[index];
+  const box=document.createElement('div');
+  box.style.cssText='background:rgba(255,255,255,0.1);padding:15px;border-radius:8px;color:white;animation:fadeIn 0.4s ease;';
+  if(item.imagen){ const img=document.createElement('img'); img.src=item.imagen; img.style.cssText='max-width:100%;border-radius:8px;margin-bottom:10px;'; box.appendChild(img);}
+  const h3=document.createElement('h3'); h3.textContent=item.asunto; box.appendChild(h3);
+  const p=document.createElement('p'); p.textContent=item.mensaje; box.appendChild(p);
+  const idInfo=document.createElement('p'); idInfo.textContent=`ID: ${item.id}`; box.appendChild(idInfo);
+  contenedor.appendChild(box);
+}
+
+function cambiarNovedadBorrar(direccion){
+  if(novedadesBorrar.length===0) return;
+  novedadBorrarActual += direccion;
+  if(novedadBorrarActual<0) novedadBorrarActual=novedadesBorrar.length-1;
+  else if(novedadBorrarActual>=novedadesBorrar.length) novedadBorrarActual=0;
+  mostrarNovedadBorrar(novedadBorrarActual);
+}
+
+document.getElementById('btn-borrar-actual').addEventListener('click',()=>{
+  if(novedadesBorrar.length===0) return;
+  const item=novedadesBorrar[novedadBorrarActual];
+  if(confirm(`¿Seguro que quieres borrar la novedad "${item.asunto}"?`)){
+    fetch(`/borrar-novedad/${item.id}`,{method:"POST"})
+    .then(res=>{
+      if(res.ok){ alert("✅ Novedad borrada"); abrirBorrarNovedades(); cargarNovedades(); }
+      else alert("❌ Error al borrar");
+    });
+  }
+});
+
+function cerrarBorrar(){ document.getElementById('modal-borrar').style.display='none'; }
+
+function mostrarSeccion(id){
+  document.querySelectorAll('.contenido').forEach(sec=>sec.classList.toggle('activo',sec.id===id));
+  setTimeout(()=>{window.scrollTo({top:0,behavior:'smooth'});},50);
+}
+
+function abrirNosotros(){document.getElementById('modal-nosotros').style.display='flex';}
+function cerrarNosotros(){document.getElementById('modal-nosotros').style.display='none';}
+function abrirLogin(){document.getElementById('modal-login').style.display='flex';}
+function cerrarLogin(){document.getElementById('modal-login').style.display='none';}
+function abrirActualizar(){document.getElementById('modal-actualizar').style.display='flex';}
+function cerrarActualizar(){document.getElementById('modal-actualizar').style.display='none';}
+function cerrarGracias(){document.getElementById('modal-gracias').style.display='none';}
+
+function ajustarFlechas(){
+  const contenedor=document.getElementById('slider-novedades');
+  const novedad=document.getElementById('novedad-activa');
+  const altura=novedad.offsetHeight;
+  const mitad=altura/2;
+  document.getElementById('btn-prev').style.top=mitad+'px';
+  document.getElementById('btn-next').style.top=mitad+'px';
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  // Login
+  document.getElementById('form-login').addEventListener('submit', async e => {
+      e.preventDefault();
+      const user = document.getElementById('usuario').value;
+      const pass = document.getElementById('contrasena').value;
+  
+      const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario: user, contrasena: pass })
+      });
+  
+      const data = await res.json();
+      if(data.ok){
+          cerrarLogin();
+          document.getElementById('btn-login').style.display = 'none';
+          mostrarBotonesAdmin();
+      } else {
+          document.getElementById('error-login').style.display = 'block';
+      }
+  });
+
+
+  function mostrarBotonesAdmin(){
+    if(!document.getElementById('btn-admin')){
+      const btn = document.createElement('button');
+      btn.id = 'btn-admin';
+      btn.type = 'button';  // <-- esto evita que se comporte como submit
+      btn.textContent = 'Admin Panel';
+      btn.style.cssText = 'margin-left:20px;background:#28a745;color:#fff;border:none;padding:8px 16px;border-radius:5px;cursor:pointer;';
+      btn.onclick = () => { window.location.href = '/admin'; }; // redirige correctamente
+      document.querySelector('header').appendChild(btn);
+    }
+  }
+
+
+
+  // Ideas
+  document.getElementById('form-ideas').addEventListener('submit',function(e){
+    e.preventDefault();
+    const formData=new FormData(this);
+    fetch('/ideas',{method:'POST',body:formData})
+      .then(()=>{document.getElementById('modal-gracias').style.display='flex'; this.reset();})
+      .catch(err=>console.error(err));
+  });
+
+  mostrarSeccion('inicio');
+});
+</script>
+</body>
+</html>
+
+
+

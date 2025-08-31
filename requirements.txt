@@ -1,0 +1,14 @@
+Flask
+gunicorn
+Pillow
+Werkzeug
+Flask-SQLAlchemy
+psycopg2-binary
+pyngrok
+cloudinary
+requests
+google-auth
+google-auth-oauthlib
+google-auth-httplib2
+google-api-python-client
+Flask-Session
