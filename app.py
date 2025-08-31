@@ -94,6 +94,19 @@ def crear_app():
         except Exception as e:
             return jsonify({"error": str(e)}), 500
     
+    @app.route("/db/tables/<nombre>", methods=["DELETE"])
+    def borrar_tabla(nombre):
+        try:
+            conn = get_conn()
+            cur = conn.cursor()
+            cur.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(sql.Identifier(nombre)))
+            conn.commit()
+            cur.close()
+            conn.close()
+            return jsonify({"msg": f"Tabla {nombre} borrada"})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+    
     # Borrar todos los registros de una tabla
     @app.route("/db/table/<nombre>/rows", methods=["DELETE"])
     def borrar_todas_filas(nombre):
