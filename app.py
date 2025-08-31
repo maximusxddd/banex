@@ -39,9 +39,9 @@ def crear_app():
 
     
     def get_conn():
-        DATABASE_URL = os.environ.get("DATABASE_URL")  # Railway normalmente lo exporta
+        DATABASE_URL = os.environ.get("SQLALCHEMY_DATABASE_URI")  # Railway normalmente lo exporta
         if not DATABASE_URL:
-            raise Exception("No se encontró DATABASE_URL en las variables de entorno")
+            raise Exception("No se encontró SQLALCHEMY_DATABASE_URI en las variables de entorno")
     
         result = urllib.parse.urlparse(DATABASE_URL)
     
