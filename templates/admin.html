@@ -8,7 +8,7 @@
 body { background:#000; color:#fff; font-family:sans-serif; margin:0; padding:0; }
 header { padding:20px; text-align:center; background:#111; }
 h1 { margin:0; }
-nav { display:flex; justify-content:center; margin:20px 0; }
+nav { display:flex; justify-content:center; margin:20px 0; flex-wrap: wrap; gap:10px; }
 nav button { margin:0 10px; padding:10px 20px; background:#fff; color:#000; border:none; border-radius:5px; cursor:pointer; }
 section { display:none; padding:20px; max-width:800px; margin:auto; }
 section.active { display:block; }
@@ -16,6 +16,8 @@ input, select, textarea, button { display:block; margin:10px 0; padding:8px; wid
 button.submit-btn { background:#28a745; color:#fff; cursor:pointer; }
 button.delete-btn { background:#dc3545; color:#fff; cursor:pointer; }
 img.novedad { max-width:100%; border-radius:5px; margin-bottom:10px; }
+table { width:100%; border-collapse:collapse; margin-top:10px; }
+th, td { padding:8px; border:1px solid #fff; text-align:left; }
 </style>
 </head>
 <body>
@@ -24,15 +26,11 @@ img.novedad { max-width:100%; border-radius:5px; margin-bottom:10px; }
 <h1>Admin Panel</h1>
 </header>
 
-<nav style="flex-wrap: wrap; justify-content: center; gap: 10px;">
-  <!-- Fila 1: 3 botones -->
-  <div style="display:flex; gap:10px; width:100%; justify-content:center;">
+<nav>
+  <div style="display:flex; gap:10px; width:100%; justify-content:center; flex-wrap: wrap;">
     <button onclick="showSection('usuarios')">Usuarios</button>
-    <button onclick="showSection('novedades')">Borrar</button>
-    <button onclick="showSection('novedadcrear')">Novedades</button>
-  </div>
-  <!-- Fila 2: 2 botones -->
-  <div style="display:flex; gap:10px; width:100%; justify-content:center; margin-top:10px;">
+    <button onclick="showSection('novedades')">Novedades</button>
+    <button onclick="showSection('novedadcrear')">Crear Novedad</button>
     <button onclick="showSection('ideas')">Ideas</button>
     <button onclick="showSection('tables')">Tables</button>
   </div>
@@ -50,104 +48,9 @@ img.novedad { max-width:100%; border-radius:5px; margin-bottom:10px; }
     <textarea name="columnas" placeholder="Ejemplo: id SERIAL PRIMARY KEY, nombre TEXT, edad INT" required></textarea>
     <button type="submit" class="submit-btn">Crear Tabla</button>
   </form>
-  
+
   <div id="tabla-detalles"></div>
 </section>
-
-<script>
-// Cargar tablas
-function cargarTablas(){
-  fetch('/db/tables')
-  .then(res=>res.json())
-  .then(data=>{
-    const lista=document.getElementById('lista-tablas');
-    lista.innerHTML='';
-    data.tablas.forEach(t=>{
-      const div=document.createElement('div');
-      div.style.margin="10px 0";
-      div.innerHTML=`
-        <strong>${t}</strong>
-        <button onclick="verTabla('${t}')">Ver</button>
-      `;
-      lista.appendChild(div);
-    });
-  });
-}
-
-// Ver registros de una tabla
-function verTabla(nombre){
-  fetch(`/db/table/${nombre}`)
-  .then(res=>res.json())
-  .then(data=>{
-    const cont=document.getElementById('tabla-detalles');
-    cont.innerHTML=`<h3>Tabla: ${nombre}</h3>`;
-    
-    if(data.registros.length===0){ 
-      cont.innerHTML+="<p>Vacía</p>"; 
-      return; 
-    }
-
-    // Botón borrar todos los registros
-    const borrarTodosBtn = document.createElement('button');
-    borrarTodosBtn.textContent = '🗑️ Borrar todos los registros';
-    borrarTodosBtn.className = 'delete-btn';
-    borrarTodosBtn.onclick = () => {
-      if(confirm(`¿Borrar todos los registros de ${nombre}?`)){
-        fetch(`/db/table/${nombre}/rows`, {method:'DELETE'})
-        .then(()=> verTabla(nombre))
-      }
-    };
-    cont.appendChild(borrarTodosBtn);
-
-    const table=document.createElement('table');
-    table.border="1"; table.cellPadding="5"; table.style.marginTop="10px";
-    const thead=document.createElement('thead');
-    const headRow=document.createElement('tr');
-    Object.keys(data.registros[0]).forEach(col=>{
-      const th=document.createElement('th'); th.textContent=col; headRow.appendChild(th);
-    });
-    // Añadir columna acción
-    const thAcc=document.createElement('th'); thAcc.textContent='Acción'; headRow.appendChild(thAcc);
-
-    thead.appendChild(headRow); table.appendChild(thead);
-    const tbody=document.createElement('tbody');
-
-    data.registros.forEach(r=>{
-      const tr=document.createElement('tr');
-      Object.values(r).forEach(val=>{
-        const td=document.createElement('td'); td.textContent=val; tr.appendChild(td);
-      });
-
-      // Botón borrar fila
-      const tdAcc=document.createElement('td');
-      const btn=document.createElement('button'); 
-      btn.textContent='Borrar'; 
-      btn.className='delete-btn';
-      btn.onclick = ()=>{
-        if(confirm('Borrar este registro?')){
-          fetch(`/db/table/${nombre}/row/${r.id}`, {method:'DELETE'})
-          .then(()=> verTabla(nombre));
-        }
-      };
-      tdAcc.appendChild(btn);
-      tr.appendChild(tdAcc);
-
-      tbody.appendChild(tr);
-    });
-    table.appendChild(tbody);
-    cont.appendChild(table);
-  });
-}
-
-// Crear tabla
-document.getElementById('form-crear-tabla').addEventListener('submit', e=>{
-  e.preventDefault();
-  const formData=new FormData(e.target);
-  fetch('/db/tables',{method:'POST',body:formData})
-  .then(res=>res.json())
-  .then(()=>{ e.target.reset(); cargarTablas(); alert('✅ Tabla creada'); });
-});
-</script>
 
 <!-- Panel Usuarios -->
 <section id="usuarios" class="active">
@@ -194,7 +97,100 @@ function showSection(id){
   document.getElementById(id).classList.add('active');
 }
 
-// Crear usuario
+// --- TABLAS ---
+function cargarTablas(){
+  fetch('/db/tables')
+  .then(res=>res.json())
+  .then(data=>{
+    const lista=document.getElementById('lista-tablas');
+    lista.innerHTML='';
+    data.tablas.forEach(t=>{
+      const div=document.createElement('div');
+      div.style.margin="10px 0";
+      div.innerHTML=`
+        <strong>${t}</strong>
+        <button onclick="verTabla('${t}')">Ver</button>
+        <button class="delete-btn" onclick="borrarTabla('${t}')">Borrar</button>
+      `;
+      lista.appendChild(div);
+    });
+  });
+}
+
+function borrarTabla(nombre){
+  if(confirm(`¿Borrar la tabla ${nombre}?`)){
+    fetch(`/db/tables/${nombre}`, { method:'DELETE' })
+    .then(()=> cargarTablas());
+  }
+}
+
+function verTabla(nombre){
+  fetch(`/db/table/${nombre}`)
+  .then(res=>res.json())
+  .then(data=>{
+    const cont=document.getElementById('tabla-detalles');
+    cont.innerHTML=`<h3>Tabla: ${nombre}</h3>`;
+
+    if(data.registros.length===0){ 
+      cont.innerHTML+="<p>Vacía</p>"; 
+      return; 
+    }
+
+    // Borrar todos los registros
+    const borrarTodosBtn = document.createElement('button');
+    borrarTodosBtn.textContent='🗑️ Borrar todos los registros';
+    borrarTodosBtn.className='delete-btn';
+    borrarTodosBtn.onclick=()=>{
+      if(confirm(`¿Borrar todos los registros de ${nombre}?`)){
+        fetch(`/db/table/${nombre}/rows`,{method:'DELETE'}).then(()=>verTabla(nombre));
+      }
+    };
+    cont.appendChild(borrarTodosBtn);
+
+    const table=document.createElement('table');
+    const thead=document.createElement('thead');
+    const headRow=document.createElement('tr');
+
+    Object.keys(data.registros[0]).forEach(col=>{
+      const th=document.createElement('th'); th.textContent=col; headRow.appendChild(th);
+    });
+    const thAcc=document.createElement('th'); thAcc.textContent='Acción'; headRow.appendChild(thAcc);
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody=document.createElement('tbody');
+    data.registros.forEach(r=>{
+      const tr=document.createElement('tr');
+      Object.values(r).forEach(val=>{
+        const td=document.createElement('td'); td.textContent=val; tr.appendChild(td);
+      });
+      const tdAcc=document.createElement('td');
+      const btn=document.createElement('button');
+      btn.textContent='Borrar';
+      btn.className='delete-btn';
+      btn.onclick=()=>{
+        if(confirm('Borrar este registro?')){
+          fetch(`/db/table/${nombre}/row/${r.id}`,{method:'DELETE'}).then(()=>verTabla(nombre));
+        }
+      };
+      tdAcc.appendChild(btn);
+      tr.appendChild(tdAcc);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    cont.appendChild(table);
+  });
+}
+
+document.getElementById('form-crear-tabla').addEventListener('submit', e=>{
+  e.preventDefault();
+  const formData=new FormData(e.target);
+  fetch('/db/tables',{method:'POST',body:formData})
+  .then(res=>res.json())
+  .then(()=>{ e.target.reset(); cargarTablas(); alert('✅ Tabla creada'); });
+});
+
+// --- USUARIOS ---
 document.getElementById('form-crear-usuario').addEventListener('submit', e=>{
   e.preventDefault();
   const formData=new FormData(e.target);
@@ -204,22 +200,21 @@ document.getElementById('form-crear-usuario').addEventListener('submit', e=>{
   .catch(err=>console.error(err));
 });
 
-// Crear novedad
+// --- NOVEDADES ---
 document.getElementById('form-crear-novedad').addEventListener('submit', e=>{
   e.preventDefault();
-  const formData = new FormData(e.target);
-  fetch('/novedades', { method:'POST', body:formData })
-    .then(res=>res.text())
-    .then(()=>{
-      e.target.reset();
-      alert('✅ Novedad creada');
-      cargarNovedades();
-      showSection('novedades');
-    })
-    .catch(err=>console.error(err));
+  const formData=new FormData(e.target);
+  fetch('/novedades',{method:'POST',body:formData})
+  .then(res=>res.text())
+  .then(()=>{
+    e.target.reset();
+    alert('✅ Novedad creada');
+    cargarNovedades();
+    showSection('novedades');
+  })
+  .catch(err=>console.error(err));
 });
 
-// Cargar novedades
 function cargarNovedades(){
   fetch('/ver-novedades')
   .then(res=>res.json())
@@ -231,16 +226,25 @@ function cargarNovedades(){
       if(n.imagen){ const img=document.createElement('img'); img.src=n.imagen; img.className='novedad'; div.appendChild(img);}
       const h3=document.createElement('h3'); h3.textContent=n.asunto; div.appendChild(h3);
       const p=document.createElement('p'); p.textContent=n.mensaje; div.appendChild(p);
-      const btn=document.createElement('button'); btn.textContent='Borrar'; btn.className='delete-btn';
-      btn.onclick=()=>{ if(confirm('Borrar novedad?')) fetch(`/borrar-novedad/${n.id}`,{method:'POST'}).then(()=>cargarNovedades()); };
+
+      const btn=document.createElement('button');
+      btn.textContent='Borrar';
+      btn.className='delete-btn';
+      btn.onclick=()=>{
+        if(confirm('Borrar novedad?')){
+          fetch(`/borrar-novedad/${n.id}`,{method:'POST'}).then(()=>cargarNovedades());
+        }
+      };
       div.appendChild(btn);
       lista.appendChild(div);
     });
   });
 }
 
-// Inicializar
-document.addEventListener('DOMContentLoaded',()=>{ cargarNovedades(); });
+document.addEventListener('DOMContentLoaded',()=>{ 
+  cargarTablas();
+  cargarNovedades(); 
+});
 </script>
 
 </body>
